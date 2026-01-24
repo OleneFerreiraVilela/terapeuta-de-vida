@@ -5,11 +5,17 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
   return {
     plugins: [react()],
+    base: '/',
     define: {
       'process.env.API_KEY': JSON.stringify(env.API_KEY),
     },
+    server: {
+      historyApiFallback: true,
+    },
     build: {
       outDir: 'dist',
+      sourcemap: false,
+      minify: 'esbuild',
     },
   };
 });
