@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { AppStage, UserData, MapResult, ChatMessage, User } from './types';
 import { calculateMap, getCardData } from './utils/numerology';
@@ -129,7 +128,7 @@ const PreMapEducation: React.FC<PreMapEducationProps> = ({ onComplete }) => {
                   className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"
                   onError={(e) => {
-                    const target = e.target as HTMLDivElement;
+                    const target = e.target as HTMLImageElement;
                     target.style.display = 'none';
                   }}
                />
@@ -197,10 +196,6 @@ const App: React.FC = () => {
     const user = authService.getCurrentUser();
     if (user) {
       setCurrentUser(user);
-      if (user.role === 'admin') {
-         // Se a pessoa recarregar a página e for admin, talvez não deva ir para o splash
-         // Mas como temos splash effect, deixamos rolar
-      }
     }
     
     // Splash Timeout
