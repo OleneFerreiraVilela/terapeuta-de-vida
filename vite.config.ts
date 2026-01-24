@@ -7,15 +7,18 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     base: '/',
     define: {
-      'process.env.API_KEY': JSON.stringify(env.API_KEY),
+      'process.env.API_KEY': JSON.stringify(env.API_KEY || ''),
     },
-    server: {
-      historyApiFallback: true,
-    },
+    // The server property does not support historyApiFallback; Vite handles SPA routing fallbacks automatically for index.html.
     build: {
       outDir: 'dist',
       sourcemap: false,
       minify: 'esbuild',
+      rollupOptions: {
+        output: {
+          manualChunks: undefined,
+        },
+      },
     },
   };
 });
