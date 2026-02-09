@@ -285,11 +285,12 @@ const App: React.FC = () => {
       return;
     }
 
+    const cleanCpf = authForm.cpf.replace(/\D/g, '');
     try {
       const user = await authService.register({
         fullName: authForm.fullName,
         email: authForm.email,
-        cpf: authForm.cpf,
+        cpf: cleanCpf,
         birthDate: authForm.birthDate,
         password: authForm.password
       });
@@ -512,11 +513,16 @@ const App: React.FC = () => {
             value={authForm.fullName} onChange={e => setAuthForm({...authForm, fullName: e.target.value})}
           />
           <input 
-            type="text" placeholder="CPF (apenas números)" required maxLength={11}
+            type="text" placeholder="CPF (ex: 123.456.789-09)" required maxLength={14}
+            inputMode="numeric"
             className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold transition-all"
             value={authForm.cpf} onChange={e => {
-              const val = e.target.value.replace(/\D/g, '');
-              setAuthForm({...authForm, cpf: val});
+              const raw = e.target.value.replace(/\D/g, '').slice(0, 11);
+              const formatted = raw
+                .replace(/(\d{3})(\d)/, '$1.$2')
+                .replace(/(\d{3})(\d)/, '$1.$2')
+                .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+              setAuthForm({...authForm, cpf: formatted});
             }}
           />
           <div className="flex flex-col">
