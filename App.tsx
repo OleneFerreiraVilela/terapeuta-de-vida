@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect, useRef } from 'react';
 import { AppStage, UserData, MapResult, ChatMessage, User } from './types';
 import { calculateMap, getCardData } from './utils/numerology';

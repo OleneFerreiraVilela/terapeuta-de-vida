@@ -1,0 +1,83 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: #F5EFE6;
+  --color-foreground: #233C5F;
+  --color-card: #ffffff;
+  --color-card-foreground: #233C5F;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #233C5F;
+  --color-primary: #233C5F;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #D9B77A;
+  --color-secondary-foreground: #233C5F;
+  --color-muted: #F5EFE6;
+  --color-muted-foreground: #6b7280;
+  --color-accent: #F5EFE6;
+  --color-accent-foreground: #233C5F;
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+  --color-border: #e5e7eb;
+  --color-input: #e5e7eb;
+  --color-ring: #D9B77A;
+  --color-chart-1: #233C5F;
+  --color-chart-2: #D9B77A;
+  --color-chart-3: #C78A83;
+  --color-chart-4: #9EB2A2;
+  --color-chart-5: #B8A9C9;
+  --color-sidebar-background: #ffffff;
+  --color-sidebar-foreground: #233C5F;
+  --color-sidebar-primary: #233C5F;
+  --color-sidebar-primary-foreground: #ffffff;
+  --color-sidebar-accent: #F5EFE6;
+  --color-sidebar-accent-foreground: #233C5F;
+  --color-sidebar-border: #e5e7eb;
+  --color-sidebar-ring: #D9B77A;
+
+  /* Brand colors */
+  --color-brand-gold: #D9B77A;
+  --color-brand-blue: #233C5F;
+  --color-brand-rose: #C78A83;
+  --color-brand-beige: #F5EFE6;
+  --color-brand-lilac: #B8A9C9;
+  --color-brand-sage: #9EB2A2;
+
+  --radius: 0.625rem;
+
+  --font-sans: var(--font-inter);
+  --font-serif: var(--font-playfair);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* Custom animations used by the app */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.6s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.6s ease-out;
+}
