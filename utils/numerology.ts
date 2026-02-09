@@ -137,6 +137,113 @@ export const calculateMap = (fullName: string, birthDateStr: string): MapResult 
   };
 };
 
+// Versao detalhada do calculo para verificacao no painel admin
+export interface MapCalculationDetails {
+  cleanName: string;
+  letterValues: { letter: string; value: number }[];
+  sumName: number;
+  year: number;
+  month: number;
+  day: number;
+  sumYearDigits: number;
+  caseType: string; // 'A', 'B', 'C'
+  arcano1: number;
+  arcano2: number;
+  arcano3: number;
+  arcano3Explanation: string;
+  arcano4: number;
+  arcano4Explanation: string;
+  arcano5: number;
+  arcano5Explanation: string;
+  soulArcane: number;
+  sumFullDate: number;
+}
+
+export const calculateMapDetailed = (fullName: string, birthDateStr: string): MapCalculationDetails => {
+  const cleanName = fullName.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Z]/g, "");
+  
+  const letterValues: { letter: string; value: number }[] = [];
+  let sumName = 0;
+  for (const char of cleanName) {
+    const val = PYTHAGOREAN_TABLE[char] || 0;
+    letterValues.push({ letter: char, value: val });
+    sumName += val;
+  }
+  const arcano1 = reduceToTarot(sumName);
+
+  const [yearStr, monthStr, dayStr] = birthDateStr.split('-');
+  const year = parseInt(yearStr);
+  const month = parseInt(monthStr);
+  const day = parseInt(dayStr);
+
+  const sumYearDigits = year.toString().split('').map(Number).reduce((a, b) => a + b, 0);
+  
+  let arcano2 = 0;
+  let arcano3 = 0;
+  let caseType = '';
+  let arcano3Explanation = '';
+
+  if (sumYearDigits > 22) {
+    caseType = 'A';
+    arcano2 = reduceToTarot(sumYearDigits);
+    const rawArc3 = arcano2 + month;
+    arcano3 = reduceToTarot(rawArc3);
+    arcano3Explanation = `Caso A: soma ano (${sumYearDigits}) > 22. 2o = reduceToTarot(${sumYearDigits}) = ${arcano2}. 3o = reduceToTarot(${arcano2} + ${month}) = reduceToTarot(${rawArc3}) = ${arcano3}`;
+  } else if (sumYearDigits > 9) {
+    caseType = 'B';
+    arcano2 = sumYearDigits;
+    arcano3 = reduceToSingleDigit(sumYearDigits);
+    arcano3Explanation = `Caso B: soma ano (${sumYearDigits}) entre 10-22. 2o = ${arcano2}. 3o = reducao teosófica(${sumYearDigits}) = ${arcano3}`;
+  } else {
+    caseType = 'C';
+    arcano2 = sumYearDigits;
+    arcano3 = sumYearDigits;
+    arcano3Explanation = `Caso C: soma ano (${sumYearDigits}) < 10. 2o = ${arcano2}. 3o = ${arcano3} (igual ao 2o)`;
+  }
+
+  let arcano4 = 0;
+  let arcano4Explanation = '';
+  if (caseType === 'A') {
+    const raw4 = arcano1 + arcano2;
+    arcano4 = reduceToTarot(raw4);
+    arcano4Explanation = `Caso A: 4o = reduceToTarot(1o + 2o) = reduceToTarot(${arcano1} + ${arcano2}) = reduceToTarot(${raw4}) = ${arcano4}`;
+  } else {
+    const raw4 = arcano1 + arcano3;
+    arcano4 = reduceToTarot(raw4);
+    arcano4Explanation = `Caso ${caseType}: 4o = reduceToTarot(1o + 3o) = reduceToTarot(${arcano1} + ${arcano3}) = reduceToTarot(${raw4}) = ${arcano4}`;
+  }
+
+  const val1 = arcano1 === 22 ? 0 : arcano1;
+  const val2 = arcano2 === 22 ? 0 : arcano2;
+  const val3 = arcano3 === 22 ? 0 : arcano3;
+  const val4 = arcano4 === 22 ? 0 : arcano4;
+  const rawArc5 = val1 + val2 + val3 + val4;
+  const arcano5 = reduceToTarot(rawArc5);
+  const arcano5Explanation = `5o = reduceToTarot(${val1} + ${val2} + ${val3} + ${val4}) = reduceToTarot(${rawArc5}) = ${arcano5}. (22 conta como 0 na soma)`;
+
+  const sumFullDate = day + month + year;
+  const soulArcane = reduceToTarot(sumFullDate);
+
+  return {
+    cleanName,
+    letterValues,
+    sumName,
+    year, month, day,
+    sumYearDigits,
+    caseType,
+    arcano1,
+    arcano2,
+    arcano3,
+    arcano3Explanation,
+    arcano4,
+    arcano4Explanation,
+    arcano5,
+    arcano5Explanation,
+    soulArcane,
+    sumFullDate,
+  };
+};
+
 export const getCardData = (number: number): TarotCard => {
   // O Louco: arcano 22 mapeia para o índice 0 no array de cartas
   const index = number === 22 ? 0 : number;

@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { AppStage, UserData, MapResult, ChatMessage, User } from './types';
-import { calculateMap, getCardData } from './utils/numerology';
+import { calculateMap, getCardData, calculateMapDetailed, type MapCalculationDetails } from './utils/numerology';
 import { isValidCPF, calculateAge } from './utils/validation';
 import { sendMessageToTherapist } from './services/geminiService';
 import { authService } from './services/authService';
 import { Button } from './components/Button';
-import { Sparkles, ArrowRight, User as UserIcon, Heart, Map as MapIcon, ShieldCheck, Lock, MessageCircle, Infinity, AlertCircle, Loader2, LogOut, LayoutDashboard, Users, CheckCircle2 } from 'lucide-react';
+import { Sparkles, ArrowRight, User as UserIcon, Heart, Map as MapIcon, ShieldCheck, Lock, MessageCircle, Infinity, AlertCircle, Loader2, LogOut, LayoutDashboard, Users, CheckCircle2, FlaskConical } from 'lucide-react';
 import { TAROT_CARDS } from './constants';
 
 // --- COMPONENTES INDEPENDENTES ---
@@ -185,6 +185,11 @@ const App: React.FC = () => {
   const [mapResult, setMapResult] = useState<MapResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Admin Map Test State
+  const [adminTestName, setAdminTestName] = useState('');
+  const [adminTestDate, setAdminTestDate] = useState('');
+  const [adminTestResult, setAdminTestResult] = useState<MapCalculationDetails | null>(null);
 
   // Chat State
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
@@ -617,9 +622,143 @@ const App: React.FC = () => {
              </div>
            </div>
 
+           {/* Ferramenta de Teste de Mapa */}
+           <div className="bg-white rounded-xl shadow overflow-hidden border-l-4 border-brand-gold">
+             <div className="p-4 border-b border-gray-100 flex items-center gap-2">
+               <FlaskConical className="text-brand-gold w-5 h-5" />
+               <h3 className="font-bold text-gray-700">Testar Mapa de Cliente</h3>
+             </div>
+             <div className="p-6">
+               <p className="text-sm text-gray-500 mb-4">Insira o nome completo e a data de nascimento do cliente para gerar o mapa e verificar os calculos.</p>
+               <div className="flex flex-col md:flex-row gap-4 mb-4">
+                 <div className="flex-1">
+                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wide ml-1 mb-1 block">Nome Completo</label>
+                   <input 
+                     type="text" 
+                     placeholder="Ex: Maria da Silva Santos"
+                     className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-gold/50 focus:border-brand-gold outline-none transition-all"
+                     value={adminTestName}
+                     onChange={e => setAdminTestName(e.target.value)}
+                   />
+                 </div>
+                 <div className="md:w-56">
+                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wide ml-1 mb-1 block">Data de Nascimento</label>
+                   <input 
+                     type="date" 
+                     className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-gold/50 focus:border-brand-gold outline-none transition-all"
+                     value={adminTestDate}
+                     onChange={e => setAdminTestDate(e.target.value)}
+                   />
+                 </div>
+                 <div className="flex items-end">
+                   <Button 
+                     onClick={() => {
+                       if (adminTestName.trim() && adminTestDate) {
+                         setAdminTestResult(calculateMapDetailed(adminTestName.trim(), adminTestDate));
+                       }
+                     }}
+                     disabled={!adminTestName.trim() || !adminTestDate}
+                   >
+                     Gerar Mapa
+                   </Button>
+                 </div>
+               </div>
+
+               {adminTestResult && (
+                 <div className="mt-6 space-y-4 animate-fade-in">
+                   {/* Resultado dos Arcanos */}
+                   <div className="bg-brand-beige rounded-xl p-5">
+                     <h4 className="font-serif font-bold text-brand-blue text-lg mb-4">Resultado do Mapa</h4>
+                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                       {[
+                         { label: '1. Bagagem', value: adminTestResult.arcano1, period: '0-13' },
+                         { label: '2. Ambiente', value: adminTestResult.arcano2, period: '13-25' },
+                         { label: '3. Personalidade', value: adminTestResult.arcano3, period: '25-35' },
+                         { label: '4. Maturidade', value: adminTestResult.arcano4, period: '35-45' },
+                         { label: '5. Proposito', value: adminTestResult.arcano5, period: '45+' },
+                         { label: 'Anseio da Alma', value: adminTestResult.soulArcane, period: 'Eterno' },
+                       ].map(item => {
+                         const card = getCardData(item.value);
+                         return (
+                           <div key={item.label} className="bg-white rounded-lg p-3 shadow-sm text-center">
+                             <p className="text-[10px] uppercase tracking-wider text-gray-400 mb-1">{item.label}</p>
+                             <p className="text-2xl font-bold text-brand-blue">{item.value}</p>
+                             <p className="text-sm font-serif text-brand-gold">{card.name}</p>
+                             <p className="text-[10px] text-gray-400">{item.period}</p>
+                           </div>
+                         );
+                       })}
+                     </div>
+                   </div>
+
+                   {/* Detalhes do Calculo */}
+                   <div className="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                     <h4 className="font-bold text-gray-700 mb-3 flex items-center gap-2">
+                       <span>Detalhes do Calculo</span>
+                       <span className="text-xs bg-brand-blue text-white px-2 py-0.5 rounded">{adminTestResult.caseType === 'A' ? 'Caso A (soma ano > 22)' : adminTestResult.caseType === 'B' ? 'Caso B (soma ano 10-22)' : 'Caso C (soma ano < 10)'}</span>
+                     </h4>
+                     
+                     <div className="space-y-3 text-sm">
+                       {/* Nome limpo */}
+                       <div className="bg-white rounded-lg p-3">
+                         <p className="font-bold text-gray-600 mb-1">Nome limpo:</p>
+                         <p className="font-mono text-xs text-gray-500 break-all">{adminTestResult.cleanName}</p>
+                       </div>
+
+                       {/* Valores das letras */}
+                       <div className="bg-white rounded-lg p-3">
+                         <p className="font-bold text-gray-600 mb-2">Valores Pitagoricos (letra = valor):</p>
+                         <div className="flex flex-wrap gap-1">
+                           {adminTestResult.letterValues.map((lv, i) => (
+                             <span key={i} className="inline-flex items-center bg-brand-beige text-xs font-mono px-2 py-1 rounded">
+                               <span className="font-bold text-brand-blue">{lv.letter}</span>
+                               <span className="text-gray-400 mx-0.5">=</span>
+                               <span className="text-brand-gold font-bold">{lv.value}</span>
+                             </span>
+                           ))}
+                         </div>
+                         <p className="mt-2 text-xs text-gray-500">Soma total do nome: <strong className="text-brand-blue">{adminTestResult.sumName}</strong> {'->'} Reduzido Tarot: <strong className="text-brand-gold">{adminTestResult.arcano1}</strong></p>
+                       </div>
+
+                       {/* Data */}
+                       <div className="bg-white rounded-lg p-3">
+                         <p className="font-bold text-gray-600 mb-1">Data de Nascimento:</p>
+                         <p className="text-xs text-gray-500">
+                           Dia: <strong>{adminTestResult.day}</strong> | Mes: <strong>{adminTestResult.month}</strong> | Ano: <strong>{adminTestResult.year}</strong>
+                         </p>
+                         <p className="text-xs text-gray-500 mt-1">
+                           Soma digitos do ano ({adminTestResult.year.toString().split('').join(' + ')}): <strong className="text-brand-blue">{adminTestResult.sumYearDigits}</strong>
+                         </p>
+                       </div>
+
+                       {/* Explicacoes dos arcanos */}
+                       <div className="bg-white rounded-lg p-3 space-y-2">
+                         <p className="font-bold text-gray-600">Passos do calculo:</p>
+                         <p className="text-xs text-gray-500 font-mono bg-gray-50 p-2 rounded">1o Arcano: Soma nome ({adminTestResult.sumName}) {'->'} reduceToTarot = <strong>{adminTestResult.arcano1}</strong></p>
+                         <p className="text-xs text-gray-500 font-mono bg-gray-50 p-2 rounded">{adminTestResult.arcano3Explanation}</p>
+                         <p className="text-xs text-gray-500 font-mono bg-gray-50 p-2 rounded">{adminTestResult.arcano4Explanation}</p>
+                         <p className="text-xs text-gray-500 font-mono bg-gray-50 p-2 rounded">{adminTestResult.arcano5Explanation}</p>
+                         <p className="text-xs text-gray-500 font-mono bg-gray-50 p-2 rounded">Alma: {adminTestResult.day} + {adminTestResult.month} + {adminTestResult.year} = {adminTestResult.sumFullDate} {'->'} reduceToTarot = <strong>{adminTestResult.soulArcane}</strong></p>
+                       </div>
+                     </div>
+                   </div>
+
+                   {/* Botao limpar */}
+                   <button 
+                     onClick={() => { setAdminTestResult(null); setAdminTestName(''); setAdminTestDate(''); }}
+                     className="text-sm text-gray-400 hover:text-red-500 transition-colors"
+                   >
+                     Limpar teste
+                   </button>
+                 </div>
+               )}
+             </div>
+           </div>
+
+           {/* Tabela de usuarios */}
            <div className="bg-white rounded-xl shadow overflow-hidden">
              <div className="p-4 border-b border-gray-100">
-               <h3 className="font-bold text-gray-700">Usuários Cadastrados</h3>
+               <h3 className="font-bold text-gray-700">Usuarios Cadastrados</h3>
              </div>
              <div className="overflow-x-auto">
                <table className="w-full text-sm text-left">
@@ -639,7 +778,7 @@ const App: React.FC = () => {
                      </tr>
                    ))}
                    {users.length === 0 && (
-                     <tr><td colSpan={3} className="p-6 text-center text-gray-400">Nenhum usuário encontrado.</td></tr>
+                     <tr><td colSpan={3} className="p-6 text-center text-gray-400">Nenhum usuario encontrado.</td></tr>
                    )}
                  </tbody>
                </table>
